@@ -34,7 +34,7 @@ std::vector<string>                     ObjectNameList;
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr  scene_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr  pub_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-std::string depth_path, rgb_path, label_path, depthrgpcd;
+//std::string depth_path, rgb_path, label_path, depthrgpcd;
 cv::Mat rgb_img, depth_img;
 double fx, fy, cx, cy, depth_factor;
 
@@ -50,10 +50,31 @@ int main()
   cx=319.0; 
   cy=237.0;
   depth_factor = 1000;
-  depth_path = "/home/martin/Skrivbord/data/000001-depth.png";
-  rgb_path = "/home/martin/Skrivbord/data/000001-color.png";
-  label_path = "/home/martin/Skrivbord/data/000001-label.label";      
-  depthrgpcd = "/home/martin/Skrivbord/data/000001-scan.pcd";        
+  //To load a batch, change the top-value of currit (inside the for-loop)
+  for (int currit = 1; currit <= 105 ; currit++){
+	  std::string numberstring;
+	  if(currit < 10){
+		    numberstring = "00000"+std::to_string(currit);
+	  }
+	  if(currit >= 10 && currit < 100){
+		    numberstring = "0000"+std::to_string(currit);
+	  }
+	  if(currit >= 100 && currit < 1000){
+		    numberstring = "000"+std::to_string(currit);
+	  }
+	  if(currit >= 1000 && currit < 10000){
+		    numberstring = "00"+std::to_string(currit);
+	  }
+	  if(currit >= 10000 && currit < 100000){
+		    numberstring = "0"+std::to_string(currit);
+	  }
+	  if(currit >= 100000 && currit < 1000000){
+		    numberstring = std::to_string(currit);
+	  }
+  std::string depth_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-depth.png";
+  std::string rgb_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-color.png";
+  std::string label_path = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"-label.label";      
+  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"-scan.pcd";        
   depth_img = cv::imread(depth_path, -1);
   rgb_img = cv::imread(rgb_path, -1);
   if(!rgb_img.data || !depth_img.data)
@@ -72,7 +93,7 @@ int main()
   myfile.open (label_path);
 
   cv::imshow("rgb", rgb_img);
-  cv::waitKey(300);
+  cv::waitKey(30);
  
    scene_cloud.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
    pcl::PointXYZRGB point;
@@ -106,5 +127,6 @@ int main()
 	  pcl::io::savePCDFileASCII(depthrgpcd, *scene_cloud);
 
       newdepthpcd.close();
+  }
       return 0;
 }
