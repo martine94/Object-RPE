@@ -51,7 +51,7 @@ int main()
   cy=237.0;
   depth_factor = 1000;
   //To load a batch, change the top-value of currit (inside the for-loop)
-  for (int currit = 1; currit <= 105 ; currit++){
+  for (int currit = 1; currit <= 158 ; currit++){
 	  std::string numberstring;
 	  if(currit < 10){
 		    numberstring = "00000"+std::to_string(currit);
@@ -71,10 +71,15 @@ int main()
 	  if(currit >= 100000 && currit < 1000000){
 		    numberstring = std::to_string(currit);
 	  }
+	  //the paths also has to be adjusted
   std::string depth_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-depth.png";
   std::string rgb_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-color.png";
-  std::string label_path = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"-label.label";      
-  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"-scan.pcd";        
+  std::string label_path = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"/scan.label";      
+  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"/scan.pcd";        
+  string dirnamestr = "/media/martin/Innehåller/datafortrain/01/"+numberstring;
+  char dirname[dirnamestr.size() + 1];
+  strcpy(dirname, dirnamestr.c_str());
+  mkdir(dirname, 0777);
   depth_img = cv::imread(depth_path, -1);
   rgb_img = cv::imread(rgb_path, -1);
   if(!rgb_img.data || !depth_img.data)
@@ -92,8 +97,8 @@ int main()
   ofstream newdepthpcd;
   myfile.open (label_path);
 
-  cv::imshow("rgb", rgb_img);
-  cv::waitKey(30);
+  //cv::imshow("rgb", rgb_img);
+  //cv::waitKey(30);
  
    scene_cloud.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
    pcl::PointXYZRGB point;
