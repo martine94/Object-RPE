@@ -35,7 +35,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr  scene_cloud (new pcl::PointCloud<pcl::Po
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr  pub_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 
 //std::string depth_path, rgb_path, label_path, depthrgpcd;
-cv::Mat rgb_img, depth_img;
+cv::Mat rgb_img, depth_img, rgb_label_img;
 double fx, fy, cx, cy, depth_factor;
 
 std::vector<string> object_names; // names of object detected
@@ -51,7 +51,7 @@ int main()
   cy=237.0;
   depth_factor = 1000;
   //To load a batch, change the top-value of currit (inside the for-loop)
-  for (int currit = 1; currit <= 158 ; currit++){
+  for (int currit = 1; currit <= 9999999 ; currit++){
 	  std::string numberstring;
 	  if(currit < 10){
 		    numberstring = "00000"+std::to_string(currit);
@@ -72,20 +72,25 @@ int main()
 		    numberstring = std::to_string(currit);
 	  }
 	  //the paths also has to be adjusted
-  std::string depth_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-depth.png";
-  std::string rgb_path = "/home/martin/Skrivbord/data/datafromlabelfusion/2019-07-24.00/images/"+numberstring+"-color.png";
-  std::string label_path = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"/scan.label";      
-  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/01/"+numberstring+"/scan.pcd";        
-  string dirnamestr = "/media/martin/Innehåller/datafortrain/01/"+numberstring;
+  std::string depth_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"-depth.png";  //<--------------- Change number
+  std::string rgb_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"-color.png";   //<--------------- Change number
+  std::string rgb_label_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"_color_labels.png";  //<--------------- Change number
+  std::string label_path = "/media/martin/Innehåller/datafortrain/3/3"+numberstring+"/scan.labels";    //<--------------- Change number  
+  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/3/3"+numberstring+"/scan.pcd";  //<--------------- Change number      
+  string dirnamestr = "/media/martin/Innehåller/datafortrain/3/3"+numberstring;   //<--------------- Change number
   char dirname[dirnamestr.size() + 1];
   strcpy(dirname, dirnamestr.c_str());
   mkdir(dirname, 0777);
   depth_img = cv::imread(depth_path, -1);
   rgb_img = cv::imread(rgb_path, -1);
-  if(!rgb_img.data || !depth_img.data)
+  rgb_label_img = cv::imread(rgb_label_path, -1);
+  if(!rgb_img.data || !depth_img.data || !rgb_label_img.data)
   {
       if(!rgb_img.data) {
 		  std::cerr << "Cannot read image from " << rgb_path << "\n"; 
+	  }
+	  else if(!rgb_label_img.data){
+		  std::cerr << "Cannot read image from " << rgb_label_path << "\n"; 
 	  }
       else{
 		   std::cerr << "Cannot read image from " << depth_path << "\n";
@@ -117,12 +122,12 @@ int main()
           point.b = rgb_img.at<cv::Vec3b>(row, col)[0];
           point.g = rgb_img.at<cv::Vec3b>(row, col)[1];
           point.r = rgb_img.at<cv::Vec3b>(row, col)[2];
-          if(point.x == 0 || point.y == 0 || point.z == 0)
+          if(rgb_img.at<cv::Vec3b>(row, col)[0] != rgb_label_img.at<cv::Vec3b>(row, col)[0] && rgb_img.at<cv::Vec3b>(row, col)[1] != rgb_label_img.at<cv::Vec3b>(row, col)[1] && rgb_img.at<cv::Vec3b>(row, col)[2] != rgb_label_img.at<cv::Vec3b>(row, col)[2])
           {
-			myfile << "0\n";
+			myfile << "1\n";
 		   }
 		   else{
-			myfile << "1\n";
+			myfile << "0\n";
 		   }
          scene_cloud->push_back(point);
 
@@ -130,7 +135,6 @@ int main()
     }
       myfile.close();
 	  pcl::io::savePCDFileASCII(depthrgpcd, *scene_cloud);
-
       newdepthpcd.close();
   }
       return 0;
