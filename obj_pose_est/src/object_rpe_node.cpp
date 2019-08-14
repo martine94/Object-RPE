@@ -45,6 +45,11 @@ std::vector<Eigen::Matrix4f> transforms;
 
 int main()
 {
+	//Makes the function able to create all the datasets at once, and not need a restart for every separate folder.
+	for(int ff = 1; ff <=12 ; ff ++){
+		bool isatendoffile = false;
+		std::string filefolder;
+		filefolder = std::to_string(ff);
   fx=580.0; 
   fy=580.0;
   cx=319.0; 
@@ -72,12 +77,12 @@ int main()
 		    numberstring = std::to_string(currit);
 	  }
 	  //the paths also has to be adjusted
-  std::string depth_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"-depth.png";  //<--------------- Change number
-  std::string rgb_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"-color.png";   //<--------------- Change number
-  std::string rgb_label_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/2019-07-24.02/images/"+numberstring+"_color_labels.png";  //<--------------- Change number
-  std::string label_path = "/media/martin/Innehåller/datafortrain/3/3"+numberstring+"/scan.labels";    //<--------------- Change number  
-  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/3/3"+numberstring+"/scan.pcd";  //<--------------- Change number      
-  string dirnamestr = "/media/martin/Innehåller/datafortrain/3/3"+numberstring;   //<--------------- Change number
+  std::string depth_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-depth.png";  //<--------------- Change number
+  std::string rgb_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-color.png";   //<--------------- Change number
+  std::string rgb_label_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"_color_labels.png";  //<--------------- Change number
+  std::string label_path = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring+"/scan.labels";    //<--------------- Change number  
+  std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring+"/scan.pcd";  //<--------------- Change number      
+  string dirnamestr = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring;   //<--------------- Change number
   char dirname[dirnamestr.size() + 1];
   strcpy(dirname, dirnamestr.c_str());
   mkdir(dirname, 0777);
@@ -88,16 +93,26 @@ int main()
   {
       if(!rgb_img.data) {
 		  std::cerr << "Cannot read image from " << rgb_path << "\n"; 
+		  isatendoffile = true;
+		  currit = 10000000;
 	  }
 	  else if(!rgb_label_img.data){
 		  std::cerr << "Cannot read image from " << rgb_label_path << "\n"; 
+		  isatendoffile = true;
+		  currit = 10000000;
 	  }
       else{
 		   std::cerr << "Cannot read image from " << depth_path << "\n";
+		   isatendoffile = true;
+		   currit = 10000000;
       }
+      if(ff==12){
       return 0;
+	}
   }
 
+if(isatendoffile==false)
+{
   ofstream myfile;
   ofstream newdepthpcd;
   myfile.open (label_path);
@@ -126,6 +141,8 @@ int main()
           {
 			myfile << "1\n";
 		   }
+		   //		   else if(point.x == 0 || point.y == 0 || point.z == 0){
+
 		   else{
 			myfile << "0\n";
 		   }
@@ -137,5 +154,7 @@ int main()
 	  pcl::io::savePCDFileASCII(depthrgpcd, *scene_cloud);
       newdepthpcd.close();
   }
-      return 0;
+}      
+}
+return 0;
 }
