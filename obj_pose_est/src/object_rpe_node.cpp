@@ -33,9 +33,11 @@ std::vector<string>                     ObjectNameList;
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr  scene_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr  pub_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr  label_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+
 
 //std::string depth_path, rgb_path, label_path, depthrgpcd;
-cv::Mat rgb_img, depth_img, rgb_label_img;
+cv::Mat rgb_img, depth_img, rgb_label_img, depth_img2, newimg;
 double fx, fy, cx, cy, depth_factor;
 
 std::vector<string> object_names; // names of object detected
@@ -43,9 +45,27 @@ std::vector<string> model_paths; // path to model of object detected
 std::vector<string> full_items; // full list of item names in dataset 
 std::vector<Eigen::Matrix4f> transforms;
 
+void depthconv(){
+	string depthstr = "/home/martin/Skrivbord/Test/000001-depth.png";   //<--------------- Change number
+	string tobesaved = "/home/martin/Skrivbord/Test/newdepthimg.png";   //<--------------- Change number
+	depth_img2 = cv::imread(depthstr, -1);
+	newimg = depth_img2;
+	for(int row=0; row < depth_img2.rows; row++)
+    {
+       for(int col=0; col < depth_img2.cols; col++)       
+        {
+		  newimg.at<cv::Vec3b>(row, col)[0] = (depth_img2.at<cv::Vec3b>(row, col)[0])*10;
+          newimg.at<cv::Vec3b>(row, col)[1] = (depth_img2.at<cv::Vec3b>(row, col)[1])*10;
+          newimg.at<cv::Vec3b>(row, col)[2] = (depth_img2.at<cv::Vec3b>(row, col)[2])*10;
+		}
+	}
+	imwrite(tobesaved, newimg); 
+}
+
 int main()
 {
 	//Makes the function able to create all the datasets at once, and not need a restart for every separate folder.
+	depthconv();
 	for(int ff = 1; ff <=12 ; ff ++){
 		bool isatendoffile = false;
 		std::string filefolder;
@@ -77,9 +97,9 @@ int main()
 		    numberstring = std::to_string(currit);
 	  }
 	  //the paths also has to be adjusted
-  std::string depth_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-depth.png";  //<--------------- Change number
-  std::string rgb_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-color.png";   //<--------------- Change number
-  std::string rgb_label_path = "/media/martin/Innehåller/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"_color_labels.png";  //<--------------- Change number
+  std::string depth_path = "/media/martin/Seagate_2TB/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-depth.png";  //<--------------- Change number
+  std::string rgb_path = "/media/martin/Seagate_2TB/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"-color.png";   //<--------------- Change number
+  std::string rgb_label_path = "/media/martin/Seagate_2TB/datafortrain/datafromlabelfusion/"+filefolder+"/images/"+numberstring+"_color_labels.png";  //<--------------- Change number
   std::string label_path = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring+"/scan.labels";    //<--------------- Change number  
   std::string depthrgpcd = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring+"/scan.pcd";  //<--------------- Change number      
   string dirnamestr = "/media/martin/Innehåller/datafortrain/"+filefolder+"/"+filefolder+""+numberstring;   //<--------------- Change number
@@ -122,6 +142,8 @@ if(isatendoffile==false)
  
    scene_cloud.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
    pcl::PointXYZRGB point;
+   label_cloud.reset(new pcl::PointCloud<pcl::PointXYZRGB>);
+   pcl::PointXYZRGB labelpoint;
    for(int row=0; row < depth_img.rows; row++)
     {
        for(int col=0; col < depth_img.cols; col++)       
@@ -137,16 +159,24 @@ if(isatendoffile==false)
           point.b = rgb_img.at<cv::Vec3b>(row, col)[0];
           point.g = rgb_img.at<cv::Vec3b>(row, col)[1];
           point.r = rgb_img.at<cv::Vec3b>(row, col)[2];
-          if(rgb_img.at<cv::Vec3b>(row, col)[0] != rgb_label_img.at<cv::Vec3b>(row, col)[0] && rgb_img.at<cv::Vec3b>(row, col)[1] != rgb_label_img.at<cv::Vec3b>(row, col)[1] && rgb_img.at<cv::Vec3b>(row, col)[2] != rgb_label_img.at<cv::Vec3b>(row, col)[2])
+          
+          labelpoint.x = (col-cx) * depth / fx;
+          labelpoint.y = (row-cy) * depth / fy;
+          labelpoint.z = depth;
+          labelpoint.b = rgb_label_img.at<cv::Vec3b>(row, col)[0];
+          labelpoint.g = rgb_label_img.at<cv::Vec3b>(row, col)[1];
+          labelpoint.r = rgb_label_img.at<cv::Vec3b>(row, col)[2];
+          if(labelpoint.r != point.r || labelpoint.g != point.g || labelpoint.b != point.b) //If there is a colordifference between these two points, that means that there is a label
           {
-			myfile << "1\n";
+			myfile << "2\n";
 		   }
 		   //		   else if(point.x == 0 || point.y == 0 || point.z == 0){
 
 		   else{
-			myfile << "0\n";
+			myfile << "1\n";
 		   }
          scene_cloud->push_back(point);
+         label_cloud->push_back(labelpoint);
 
         }
     }
@@ -154,7 +184,7 @@ if(isatendoffile==false)
 	  pcl::io::savePCDFileASCII(depthrgpcd, *scene_cloud);
       newdepthpcd.close();
   }
-}      
+ }
 }
 return 0;
 }
