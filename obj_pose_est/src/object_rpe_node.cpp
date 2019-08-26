@@ -46,17 +46,18 @@ std::vector<string> full_items; // full list of item names in dataset
 std::vector<Eigen::Matrix4f> transforms;
 
 void depthconv(){
-	string depthstr = "/home/martin/Skrivbord/Test/000001-depth.png";   //<--------------- Change number
+	string depthstr = "/home/martin/Skrivbord/Test/000001-depth(1).png";   //<--------------- Change number
 	string tobesaved = "/home/martin/Skrivbord/Test/newdepthimg.png";   //<--------------- Change number
-	depth_img2 = cv::imread(depthstr, -1);
+	depth_img2 = cv::imread(depthstr, 0); //color = 1, gray = 0, unchanged = -1 
+	
 	newimg = depth_img2;
 	for(int row=0; row < depth_img2.rows; row++)
     {
        for(int col=0; col < depth_img2.cols; col++)       
         {
-		  newimg.at<cv::Vec3b>(row, col)[0] = (depth_img2.at<cv::Vec3b>(row, col)[0])*10;
-          newimg.at<cv::Vec3b>(row, col)[1] = (depth_img2.at<cv::Vec3b>(row, col)[1])*10;
-          newimg.at<cv::Vec3b>(row, col)[2] = (depth_img2.at<cv::Vec3b>(row, col)[2])*10;
+		  newimg.at<cv::Vec3b>(row, col)[0] = (depth_img2.at<cv::Vec3b>(row, col)[0])*20;
+          //newimg.at<cv::Vec3b>(row, col)[1] = (depth_img2.at<cv::Vec3b>(row, col)[1])*10;
+          //newimg.at<cv::Vec3b>(row, col)[2] = (depth_img2.at<cv::Vec3b>(row, col)[2])*10;
 		}
 	}
 	imwrite(tobesaved, newimg); 
